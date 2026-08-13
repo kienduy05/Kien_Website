@@ -1,0 +1,60 @@
+/* Admin Panel Global Theme Variables */
+:root {
+    /* Colors */
+    --admin-bg-body: #f3f4f6;
+    --admin-bg-white: #ffffff;
+    --admin-bg-light: #f9fafb;
+    --admin-primary: #3b82f6; /* Blue Accent */
+    --admin-primary-hover: #2563eb;
+    --admin-primary-light: #eff6ff; /* Light blue for active items */
+    --admin-text-main: #1f2937;
+    --admin-text-secondary: #4b5563;
+    --admin-text-muted: #9ca3af;
+    --admin-border: #e5e7eb;
+    --admin-border-focus: #93c5fd;
+    --admin-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.admin-layout-container {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+    background-color: var(--admin-bg-body);
+    font-family: 'Inter', 'Outfit', sans-serif;
+    color: var(--admin-text-main);
+}
+
+.admin-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.admin-main {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.admin-loading {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--admin-text-secondary);
+    background-color: var(--admin-bg-body);
+}
+
+/* Base resets for admin panel to override App.css dark theme */
+.admin-layout-container h1, 
+.admin-layout-container h2, 
+.admin-layout-container h3, 
+.admin-layout-container h4 {
+    color: var(--admin-text-main);
+}
+
+.admin-layout-container p {
+    color: var(--admin-text-secondary);
+}

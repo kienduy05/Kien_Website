@@ -1,0 +1,51 @@
+/* Base app styles (can be used for generic components) */
+/* The layout specific styles are moved to ClientLayout and AdminLayout */
+
+/* We'll keep the styles from previous App.css for the ClientLayout here for simplicity, 
+   but ideally they would be in ClientLayout.css or Home.css */
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 80px; /* Account for fixed header */
+}
+
+.placeholder-section {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+.placeholder-section h1 {
+  font-size: 4rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #1e293b 0%, #4f46e5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  z-index: 1;
+}
+
+.placeholder-section p {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  z-index: 1;
+}
+
+.glow-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}

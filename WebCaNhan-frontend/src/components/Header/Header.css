@@ -1,0 +1,230 @@
+/* Client Header Theme Variables */
+:root {
+  --header-bg: rgba(255, 255, 255, 0.8);
+  --header-border: rgba(226, 232, 240, 0.6); /* slate-200/60 */
+  --header-text: #334155; /* slate-700 */
+  --header-text-hover: #111827; /* gray-900 */
+  --header-accent: #4f46e5; /* indigo-600 */
+  --header-accent-bg: rgba(79, 70, 229, 0.08);
+}
+
+.client-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  background-color: transparent;
+  border-bottom: 1px solid transparent;
+  font-family: 'Inter', 'Outfit', sans-serif;
+}
+
+.client-header.scrolled {
+  background-color: var(--header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--header-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.header-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: padding 0.3s ease;
+}
+
+.client-header.scrolled .header-container {
+  padding: 0.875rem 2rem;
+}
+
+/* Logo */
+.logo {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a; /* slate-900 */
+  letter-spacing: -0.02em;
+}
+
+.logo-dot {
+  color: var(--header-accent);
+}
+
+/* Desktop Navigation */
+.desktop-nav {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-nav {
+    display: block;
+  }
+}
+
+.nav-list {
+  display: flex;
+  list-style: none;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  display: block;
+  padding: 0.5rem 0.875rem;
+  color: var(--header-text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--header-accent);
+  background-color: var(--header-accent-bg);
+}
+
+/* Right Utilities */
+.header-utilities {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--header-text);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background-color: rgba(241, 245, 249, 0.8); /* slate-100 */
+  color: var(--header-text-hover);
+}
+
+.cv-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1.25rem;
+  background-color: transparent;
+  color: var(--header-accent);
+  border: 1.5px solid var(--header-accent);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.cv-btn:hover {
+  background-color: var(--header-accent-bg);
+  transform: translateY(-1px);
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .desktop-only {
+    display: flex;
+  }
+}
+
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--header-text);
+  background: transparent;
+  border: none;
+}
+
+@media (min-width: 1024px) {
+  .mobile-menu-btn {
+    display: none;
+  }
+}
+
+/* Mobile Menu Overlay */
+.mobile-nav-overlay {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--header-border);
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-nav-overlay.open {
+  max-height: 100vh;
+  padding: 1.5rem 2rem 2.5rem;
+}
+
+.mobile-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mobile-nav-link {
+  display: block;
+  padding: 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--header-text);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.4);
+  transition: color 0.2s;
+}
+
+.mobile-nav-link:hover {
+  color: var(--header-accent);
+}
+
+.mobile-nav-footer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-cv-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem;
+}
