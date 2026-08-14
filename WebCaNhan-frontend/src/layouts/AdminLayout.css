@@ -18,7 +18,8 @@
 .admin-layout-container {
     display: grid;
     grid-template-columns: 260px 1fr;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background-color: var(--admin-bg-body);
     font-family: 'Inter', 'Outfit', sans-serif;
     color: var(--admin-text-main);
@@ -27,7 +28,7 @@
 .admin-content-wrapper {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
     overflow-x: hidden;
 }
 
