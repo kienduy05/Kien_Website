@@ -33,40 +33,62 @@ const Login = () => {
 
     return (
         <div className="login-container">
+            <div className="login-decorative-bg">
+                <div className="blob blob-1"></div>
+                <div className="blob blob-2"></div>
+            </div>
+            
             <div className="login-box">
                 <div className="login-header">
-                    <h2>Admin Login</h2>
-                    <p>Enter your credentials to access the dashboard</p>
+                    <div className="login-logo">
+                        <span className="logo-icon">🔐</span>
+                    </div>
+                    <h2>Đăng nhập Hệ thống</h2>
+                    <p>Nhập thông tin xác thực để truy cập bảng điều khiển (Admin Dashboard)</p>
                 </div>
                 
-                {error && <div className="login-error">{error}</div>}
+                {error && <div className="login-error">⚠️ {error}</div>}
                 
                 <form onSubmit={handleSubmit} className="login-form">
                     <div className="form-group">
-                        <label>Username</label>
-                        <input 
-                            type="text" 
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required 
-                            placeholder="Enter username"
-                        />
+                        <label>Tên đăng nhập</label>
+                        <div className="input-wrapper">
+                            <span className="input-icon">👤</span>
+                            <input 
+                                type="text" 
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required 
+                                placeholder="Nhập tên đăng nhập..."
+                            />
+                        </div>
                     </div>
                     
                     <div className="form-group">
-                        <label>Password</label>
-                        <input 
-                            type="password" 
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required 
-                            placeholder="Enter password"
-                        />
+                        <label>Mật khẩu</label>
+                        <div className="input-wrapper">
+                            <span className="input-icon">🔑</span>
+                            <input 
+                                type="password" 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required 
+                                placeholder="Nhập mật khẩu..."
+                            />
+                        </div>
                     </div>
                     
                     <button type="submit" className="login-btn" disabled={isLoading}>
-                        {isLoading ? 'Authenticating...' : 'Login'}
+                        {isLoading ? (
+                            <span className="loading-text">Đang xác thực...</span>
+                        ) : (
+                            <span className="btn-text">Đăng nhập <span className="btn-arrow">→</span></span>
+                        )}
                     </button>
+                    
+                    <div className="login-footer">
+                        <a href="/" className="back-link">← Quay lại Trang chủ</a>
+                    </div>
                 </form>
             </div>
         </div>

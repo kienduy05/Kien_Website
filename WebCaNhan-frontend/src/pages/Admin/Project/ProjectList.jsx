@@ -47,7 +47,7 @@ const ProjectList = () => {
             render: (row) => row.primary_image ? <img src={`http://localhost:5000/uploads/projects/${row.primary_image}`} alt={row.name} /> : <div className="no-image-ph">Trống</div> 
         },
         { header: 'Tên dự án', accessor: 'name' },
-        { header: 'Nổi bật', accessor: 'is_featured', render: (row) => row.is_featured ? '⭐ Có' : 'Không' },
+        { header: 'Nổi bật', accessor: 'is_featured', render: (row) => row.is_featured ? <span className="badge badge-success">⭐ Có</span> : <span className="badge badge-neutral">Không</span> },
         { header: 'Thứ tự', accessor: 'display_order' }
     ];
 
