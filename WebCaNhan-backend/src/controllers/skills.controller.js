@@ -18,16 +18,26 @@ class SkillsController {
     }
     
     create = async (req, res, next) => {
+        const payload = { ...req.body };
+        if (req.file) {
+            payload.icon_url = req.file.filename;
+        }
+
         new CREATED({
             message: 'Create skills success',
-            metadata: await SkillsService.create(req.body)
+            metadata: await SkillsService.create(payload)
         }).send(res);
     }
     
     update = async (req, res, next) => {
+        const payload = { ...req.body };
+        if (req.file) {
+            payload.icon_url = req.file.filename;
+        }
+
         new SuccessResponse({
             message: 'Update skills success',
-            metadata: await SkillsService.update(req.params.id, req.body)
+            metadata: await SkillsService.update(req.params.id, payload)
         }).send(res);
     }
     

@@ -2,6 +2,9 @@
 const ProjectImagesModel = require('../models/project_images.model');
 const { BadRequestError, NotFoundError } = require('../core/error.response');
 
+const fs = require('fs');
+const path = require('path');
+
 class ProjectImagesService {
     static async getAll() {
         return await ProjectImagesModel.getAll();
@@ -32,6 +35,19 @@ class ProjectImagesService {
     static async delete(id) {
         const found = await ProjectImagesModel.getById(id);
         if(!found) throw new NotFoundError('project_images not found');
+        
+        // Delete physical file
+        if (found.image_url) {
+            const filePath = path.join(__dirname, '../../public/uploads/projects', found.image_url);
+            if (fs.existsSync(filePath)) {
+                try {
+                    fs.unlinkSync(filePath);
+                } catch(err) {
+                    console.error("Error deleting image file", err);
+                }
+            }
+        }
+
         return await ProjectImagesModel.delete(id);
     }
 }

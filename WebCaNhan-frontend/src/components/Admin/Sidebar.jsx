@@ -23,13 +23,65 @@ const Sidebar = () => {
                         <li>
                             <NavLink to="/admin/profile" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
                                 <span className="nav-icon">👤</span>
-                                <span className="nav-text">profile</span>
+                                <span className="nav-text">Profile</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/education" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🎓</span>
+                                <span className="nav-text">Education</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/experiences" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">💼</span>
+                                <span className="nav-text">Experiences</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/skills" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">⚡</span>
+                                <span className="nav-text">Skills</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/technologies" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🛠️</span>
+                                <span className="nav-text">Technologies</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/projects" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🚀</span>
+                                <span className="nav-text">Projects</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/posts" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">📝</span>
+                                <span className="nav-text">Posts</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/labs" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🧪</span>
+                                <span className="nav-text">Labs</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/social-links" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">🔗</span>
+                                <span className="nav-text">Social Links</span>
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/admin/contacts" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+                                <span className="nav-icon">✉️</span>
+                                <span className="nav-text">Contacts</span>
                             </NavLink>
                         </li>
                     </ul>
                 </div>
-
-
             </nav>
         </aside>
     );

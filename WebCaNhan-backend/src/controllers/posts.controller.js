@@ -18,16 +18,26 @@ class PostsController {
     }
     
     create = async (req, res, next) => {
+        const payload = { ...req.body };
+        if (req.file) {
+            payload.thumbnail_url = req.file.filename;
+        }
+
         new CREATED({
             message: 'Create posts success',
-            metadata: await PostsService.create(req.body)
+            metadata: await PostsService.create(payload)
         }).send(res);
     }
     
     update = async (req, res, next) => {
+        const payload = { ...req.body };
+        if (req.file) {
+            payload.thumbnail_url = req.file.filename;
+        }
+
         new SuccessResponse({
             message: 'Update posts success',
-            metadata: await PostsService.update(req.params.id, req.body)
+            metadata: await PostsService.update(req.params.id, payload)
         }).send(res);
     }
     
