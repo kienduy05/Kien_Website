@@ -7,7 +7,6 @@ import Home from './pages/Client/Home';
 import Login from './pages/Admin/Login';
 import ProfileEdit from './pages/Admin/ProfileEdit';
 import EducationList from './pages/Admin/Education/EducationList';
-import EducationForm from './pages/Admin/Education/EducationForm';
 import ExperiencesList from './pages/Admin/Experiences/ExperiencesList';
 import ExperiencesForm from './pages/Admin/Experiences/ExperiencesForm';
 import SocialLinksList from './pages/Admin/SocialLinks/SocialLinksList';
@@ -45,7 +44,6 @@ function App() {
             <Route path="profile" element={<ProfileEdit />} />
             
             <Route path="education" element={<EducationList />} />
-            <Route path="education/:id" element={<EducationForm />} />
             
             <Route path="experiences" element={<ExperiencesList />} />
             <Route path="experiences/:id" element={<ExperiencesForm />} />
