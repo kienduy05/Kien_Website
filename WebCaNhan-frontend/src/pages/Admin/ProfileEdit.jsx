@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import './ProfileEdit.css';
+import alertService from '../../utils/alert';
 
 const ProfileEdit = () => {
     const [profile, setProfile] = useState({
@@ -115,6 +116,10 @@ const ProfileEdit = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        const isConfirmed = await alertService.confirm('Xác nhận lưu', 'Bạn có chắc chắn muốn lưu các thông tin này không?', 'Lưu', 'Hủy');
+        if (!isConfirmed) return;
+        
         setIsSaving(true);
         setMessage({ type: '', text: '' });
 
@@ -142,6 +147,7 @@ const ProfileEdit = () => {
             setMessage({ type: 'success', text: 'Cập nhật hồ sơ thành công!' });
             
             setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            alertService.success('Cập nhật thành công!');
         } catch (error) {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Cập nhật hồ sơ thất bại!' });
         } finally {

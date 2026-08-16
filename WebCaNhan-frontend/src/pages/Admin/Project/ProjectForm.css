@@ -1,0 +1,64 @@
+.project-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.image-preview-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    aspect-ratio: 1;
+    background: var(--admin-bg-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--admin-border);
+}
+
+.image-preview-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.btn-delete-img {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    opacity: 0;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.image-preview-card:hover .btn-delete-img {
+    opacity: 1;
+}
+
+.btn-delete-img:hover {
+    background: rgb(220, 38, 38);
+    transform: scale(1.1);
+}
+
+.no-image-ph {
+    color: var(--admin-text-muted);
+    font-size: 0.8rem;
+    background: var(--admin-bg-light);
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px dashed var(--admin-border);
+}

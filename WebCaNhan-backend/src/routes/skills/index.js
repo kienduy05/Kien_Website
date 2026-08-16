@@ -11,8 +11,10 @@ router.get('/:id', asyncHandler(skillsController.getById));
 
 // Protected routes (Create, Update, Delete) - Requires JWT Authentication
 router.use(authentication);
-router.post('/', asyncHandler(skillsController.create));
-router.put('/:id', asyncHandler(skillsController.update));
+const { uploadSkills } = require('../../middlewares/upload.middleware');
+
+router.post('/', uploadSkills.single('icon'), asyncHandler(skillsController.create));
+router.put('/:id', uploadSkills.single('icon'), asyncHandler(skillsController.update));
 router.delete('/:id', asyncHandler(skillsController.delete));
 
 module.exports = router;

@@ -13,6 +13,14 @@ class ProjectImagesModel {
         const result = await pool.request().input('id', sql.INT, id).query('SELECT * FROM project_images WHERE id = @id');
         return result.recordset[0];
     }
+
+    static async getByProjectId(projectId) {
+        const pool = await getSqlPool();
+        const result = await pool.request()
+            .input('project_id', sql.INT, projectId)
+            .query('SELECT * FROM project_images WHERE project_id = @project_id ORDER BY display_order ASC');
+        return result.recordset;
+    }
     
     static async create(data) {
         const pool = await getSqlPool();

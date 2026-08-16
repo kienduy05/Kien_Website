@@ -18,16 +18,26 @@ class TechnologiesController {
     }
     
     create = async (req, res, next) => {
+        const payload = { ...req.body };
+        if (req.file) {
+            payload.icon_url = req.file.filename;
+        }
+
         new CREATED({
             message: 'Create technologies success',
-            metadata: await TechnologiesService.create(req.body)
+            metadata: await TechnologiesService.create(payload)
         }).send(res);
     }
     
     update = async (req, res, next) => {
+        const payload = { ...req.body };
+        if (req.file) {
+            payload.icon_url = req.file.filename;
+        }
+
         new SuccessResponse({
             message: 'Update technologies success',
-            metadata: await TechnologiesService.update(req.params.id, req.body)
+            metadata: await TechnologiesService.update(req.params.id, payload)
         }).send(res);
     }
     
