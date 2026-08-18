@@ -557,6 +557,8 @@ CREATE TABLE posts (
 
     category NVARCHAR(100),
 
+    tags NVARCHAR(MAX),
+
     author_id INT,
 
     is_published BIT NOT NULL DEFAULT 0,
@@ -565,8 +567,7 @@ CREATE TABLE posts (
 
     created_at DATETIME NOT NULL DEFAULT GETDATE(),
 
-    updated_at DATETIME NOT NULL DEFAULT GETDATE()
-        ,
+    updated_at DATETIME NOT NULL DEFAULT GETDATE(),
 
     CONSTRAINT fk_posts_author
         FOREIGN KEY (author_id)

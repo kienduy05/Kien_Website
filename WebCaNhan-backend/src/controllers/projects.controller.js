@@ -21,6 +21,10 @@ class ProjectsController {
         const payload = { ...req.body };
         const projectImages = [];
 
+        // Force cast bit columns
+        if (payload.is_featured !== undefined) payload.is_featured = payload.is_featured === 'true' || payload.is_featured === '1' || payload.is_featured === 1 ? 1 : 0;
+        if (payload.is_published !== undefined) payload.is_published = payload.is_published === 'true' || payload.is_published === '1' || payload.is_published === 1 ? 1 : 0;
+
         if (req.body.technologies) {
             try {
                 payload.technologies = JSON.parse(req.body.technologies);
@@ -52,6 +56,10 @@ class ProjectsController {
     update = async (req, res, next) => {
         const payload = { ...req.body };
         const projectImages = [];
+
+        // Force cast bit columns
+        if (payload.is_featured !== undefined) payload.is_featured = payload.is_featured === 'true' || payload.is_featured === '1' || payload.is_featured === 1 ? 1 : 0;
+        if (payload.is_published !== undefined) payload.is_published = payload.is_published === 'true' || payload.is_published === '1' || payload.is_published === 1 ? 1 : 0;
 
         if (req.body.technologies) {
             try {

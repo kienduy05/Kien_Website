@@ -112,6 +112,17 @@
     opacity: 1;
 }
 
+.timeline-description ul,
+.timeline-description ol {
+    padding-left: 20px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.timeline-description li {
+    margin-bottom: 4px;
+}
+
 /* Dashed Card for Add New */
 .dashed-card {
     background: transparent;

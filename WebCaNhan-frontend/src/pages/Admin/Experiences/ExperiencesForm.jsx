@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import api from '../../../utils/api';
 import alertService from '../../../utils/alert';
 
-const ExperiencesForm = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const isEditMode = id && id !== 'new';
+const ExperiencesForm = ({ experienceId, onSaved, onCancel }) => {
+    const isEditMode = experienceId && experienceId !== 'new';
 
     const [formData, setFormData] = useState({
         company_name: '',
@@ -24,12 +23,14 @@ const ExperiencesForm = () => {
     useEffect(() => {
         if (isEditMode) {
             fetchData();
+        } else {
+            setIsLoading(false);
         }
-    }, [id]);
+    }, [experienceId]);
 
     const fetchData = async () => {
         try {
-            const response = await api.get(`/experiences/${id}`);
+            const response = await api.get(`/experiences/${experienceId}`);
             if (response.data.metadata) {
                 const data = response.data.metadata;
                 setFormData({
@@ -44,7 +45,6 @@ const ExperiencesForm = () => {
                 });
             }
         } catch (error) {
-            console.error("Fetch error:", error);
             alertService.error("Không thể tải dữ liệu");
         } finally {
             setIsLoading(false);
@@ -53,86 +53,107 @@ const ExperiencesForm = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+        if (name === 'is_current' && checked) {
+            setFormData(prev => ({ ...prev, is_current: true, end_date: '' }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+        }
+    };
+
+    const handleQuillChange = (value) => {
+        setFormData(prev => ({ ...prev, description: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        const isConfirmed = await alertService.confirm('Xác nhận lưu', 'Bạn có chắc chắn muốn lưu các thông tin này không?', 'Lưu', 'Hủy');
-        if (!isConfirmed) return;
-        
         setIsSaving(true);
         try {
             if (isEditMode) {
-                await api.put(`/experiences/${id}`, formData);
+                await api.put(`/experiences/${experienceId}`, formData);
             } else {
                 await api.post('/experiences', formData);
             }
             alertService.success('Lưu dữ liệu thành công!');
-            navigate('/admin/experiences');
+            if (onSaved) onSaved();
         } catch (error) {
             alertService.error(error.response?.data?.message || 'Có lỗi xảy ra!');
             setIsSaving(false);
         }
     };
 
+    const quillModules = {
+        toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['link', 'clean']
+        ],
+    };
+
     if (isLoading) return <div className="loading-spinner">Đang tải...</div>;
 
     return (
-        <div className="admin-module">
-            <div className="module-header">
-                <h2>{isEditMode ? 'Sửa thông tin Kinh nghiệm' : 'Thêm mới Kinh nghiệm'}</h2>
-                <button className="btn-secondary" onClick={() => navigate('/admin/experiences')}>Quay lại</button>
+        <form onSubmit={handleSubmit} className="admin-form extended-form">
+            <div className="form-group">
+                <label>Tên công ty / Doanh nghiệp <span style={{color: '#ef4444'}}>*</span></label>
+                <input type="text" name="company_name" value={formData.company_name} onChange={handleChange} required placeholder="Ví dụ: Google, FPT Software..." />
+            </div>
+            
+            <div className="form-row">
+                <div className="form-group">
+                    <label>Vị trí / Chức vụ <span style={{color: '#ef4444'}}>*</span></label>
+                    <input type="text" name="position" value={formData.position} onChange={handleChange} required placeholder="Ví dụ: Senior Frontend Developer" />
+                </div>
+                <div className="form-group">
+                    <label>Địa điểm làm việc</label>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <span style={{ position: 'absolute', left: '12px', color: '#94a3b8' }}>📍</span>
+                        <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="Ví dụ: Hà Nội, Việt Nam" style={{ paddingLeft: '36px' }} />
+                    </div>
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="admin-form">
-                <div className="form-section">
-                    <div className="form-group">
-                        <label>Tên công ty *</label>
-                        <input type="text" name="company_name" value={formData.company_name} onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label>Vị trí / Chức vụ *</label>
-                        <input type="text" name="position" value={formData.position} onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label>Địa điểm</label>
-                        <input type="text" name="location" value={formData.location} onChange={handleChange} />
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Ngày bắt đầu</label>
-                            <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} />
-                        </div>
-                        <div className="form-group">
-                            <label>Ngày kết thúc (Để trống nếu hiện tại)</label>
-                            <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} disabled={formData.is_current} />
-                        </div>
-                    </div>
-                    <div className="form-group checkbox-group">
-                        <label>
-                            <input type="checkbox" name="is_current" checked={formData.is_current} onChange={handleChange} />
-                            {' '}Công việc hiện tại
-                        </label>
-                    </div>
-                    <div className="form-group">
-                        <label>Mô tả công việc</label>
-                        <textarea name="description" value={formData.description} onChange={handleChange} rows="4"></textarea>
-                    </div>
-                    <div className="form-group">
-                        <label>Thứ tự hiển thị</label>
-                        <input type="number" name="display_order" value={formData.display_order} onChange={handleChange} min="0" />
-                    </div>
+            <div className="form-row">
+                <div className="form-group">
+                    <label>Ngày bắt đầu</label>
+                    <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} />
                 </div>
+                <div className="form-group">
+                    <label>Ngày kết thúc</label>
+                    <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} disabled={formData.is_current} style={{ opacity: formData.is_current ? 0.5 : 1 }} />
+                </div>
+            </div>
 
-                <div className="form-actions">
-                    <button type="submit" className="btn-primary" disabled={isSaving}>
-                        {isSaving ? 'Đang lưu...' : 'Lưu dữ liệu'}
-                    </button>
-                </div>
-            </form>
-        </div>
+            <div className="form-group checkbox-group" style={{ marginTop: '-10px', marginBottom: '20px' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 500 }}>
+                    <input type="checkbox" name="is_current" checked={formData.is_current} onChange={handleChange} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                    Đây là công việc hiện tại của tôi
+                </label>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '60px' }}>
+                <label>Mô tả công việc & Thành tựu</label>
+                <ReactQuill 
+                    theme="snow" 
+                    value={formData.description} 
+                    onChange={handleQuillChange}
+                    modules={quillModules}
+                    style={{ height: '200px' }}
+                />
+            </div>
+
+            <div className="form-group">
+                <label>Thứ tự hiển thị (Số lớn xếp trước)</label>
+                <input type="number" name="display_order" value={formData.display_order} onChange={handleChange} min="0" />
+            </div>
+
+            <div className="drawer-footer">
+                <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSaving}>Hủy</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                    {isSaving ? 'Đang lưu...' : '💾 Lưu Kinh nghiệm'}
+                </button>
+            </div>
+        </form>
     );
 };
 

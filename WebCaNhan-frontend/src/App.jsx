@@ -46,7 +46,6 @@ function App() {
             <Route path="education" element={<EducationList />} />
             
             <Route path="experiences" element={<ExperiencesList />} />
-            <Route path="experiences/:id" element={<ExperiencesForm />} />
             
             <Route path="social-links" element={<SocialLinksList />} />
             <Route path="social-links/:id" element={<SocialLinksForm />} />
@@ -63,12 +62,14 @@ function App() {
             <Route path="posts/:id" element={<PostForm />} />
             
             <Route path="skills" element={<SkillList />} />
-            <Route path="skills/:id" element={<SkillForm />} />
             
             <Route path="technologies" element={<TechnologyList />} />
             <Route path="technologies/:id" element={<TechnologyForm />} />
             
             {/* Add more admin modules here */}
+            
+            {/* Catch-all for undefined admin routes */}
+            <Route path="*" element={<Navigate to="/admin" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
