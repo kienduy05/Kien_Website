@@ -61,7 +61,7 @@ class ProjectsService {
             if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }
 
-        const { projectImages, technologies, deleted_images, ...projectData } = payload;
+        const { projectImages, technologies, deleted_images, project_technologies, project_images, ...projectData } = payload;
         const result = await ProjectsModel.update(id, projectData);
         if (!result) throw new BadRequestError('Failed to update projects');
 

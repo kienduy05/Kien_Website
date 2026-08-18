@@ -15,7 +15,7 @@ const MoonIcon = () => (
 );
 
 const DownloadIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft: '6px'}}>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
   </svg>
 );
@@ -46,9 +46,16 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }, [isDarkMode]);
+
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
-    // In a real app, you would apply the theme to the body or context here
   };
 
   const toggleMobileMenu = () => {
@@ -56,26 +63,32 @@ const Header = () => {
   };
 
   const navItems = [
-    'Home', 'About', 'Experience', 'Projects', 
+    'Home', 'About', 'Experience', 'Projects',
     'University', 'Skills', 'Blog', 'Contact'
   ];
+
+  const EyeIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  );
 
   return (
     <header className={`client-header ${scrolled ? 'scrolled' : ''}`}>
       <div className="header-container">
-        
+
         {/* Left: Logo */}
         <a href="#home" className="logo">
           <span className="logo-text">Kien<span className="logo-dot">.</span></span>
         </a>
-        
+
         {/* Center: Navigation */}
         <nav className="desktop-nav">
           <ul className="nav-list">
             {navItems.map((item) => (
               <li key={item} className="nav-item">
-                <a 
-                  href={`#${item.toLowerCase()}`} 
+                <a
+                  href={`#${item.toLowerCase()}`}
                   className="nav-link"
                 >
                   {item}
@@ -87,17 +100,18 @@ const Header = () => {
 
         {/* Right: Utilities */}
         <div className="header-utilities">
-          <button 
-            className="theme-toggle-btn" 
+          <button
+            className="theme-toggle-btn"
             onClick={toggleTheme}
             aria-label="Toggle Theme"
             title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
             {isDarkMode ? <SunIcon /> : <MoonIcon />}
           </button>
-          
-          <a href="#cv" className="cv-btn desktop-only">
-            Resume <DownloadIcon />
+
+          {/* CV Button logic depends on if we have a global state, but here we just link to a section or use generic link */}
+          <a href="#home" className="cv-btn desktop-only">
+            Xem CV <EyeIcon />
           </a>
 
           <button className="mobile-menu-btn" onClick={toggleMobileMenu}>
@@ -112,8 +126,8 @@ const Header = () => {
           <ul className="mobile-nav-list">
             {navItems.map((item) => (
               <li key={item}>
-                <a 
-                  href={`#${item.toLowerCase()}`} 
+                <a
+                  href={`#${item.toLowerCase()}`}
                   className="mobile-nav-link"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -123,8 +137,8 @@ const Header = () => {
             ))}
           </ul>
           <div className="mobile-nav-footer">
-            <a href="#cv" className="cv-btn mobile-cv-btn" onClick={() => setMobileMenuOpen(false)}>
-              Download CV <DownloadIcon />
+            <a href="#home" className="cv-btn mobile-cv-btn" onClick={() => setMobileMenuOpen(false)}>
+              Xem CV <EyeIcon />
             </a>
           </div>
         </nav>

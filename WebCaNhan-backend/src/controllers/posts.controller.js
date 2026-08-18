@@ -19,6 +19,8 @@ class PostsController {
     
     create = async (req, res, next) => {
         const payload = { ...req.body };
+        if (payload.is_published !== undefined) payload.is_published = payload.is_published === 'true' || payload.is_published === '1' || payload.is_published === 1 ? 1 : 0;
+        
         if (req.file) {
             payload.thumbnail_url = req.file.filename;
         }
@@ -31,6 +33,8 @@ class PostsController {
     
     update = async (req, res, next) => {
         const payload = { ...req.body };
+        if (payload.is_published !== undefined) payload.is_published = payload.is_published === 'true' || payload.is_published === '1' || payload.is_published === 1 ? 1 : 0;
+        
         if (req.file) {
             payload.thumbnail_url = req.file.filename;
         }

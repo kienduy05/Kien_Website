@@ -26,8 +26,8 @@ class PostsService {
         const found = await PostsModel.getById(id);
         if(!found) throw new NotFoundError('posts not found');
         
-        // Delete old thumbnail if new one is uploaded
-        if (payload.thumbnail_url && found.thumbnail_url && payload.thumbnail_url !== found.thumbnail_url) {
+        // Delete old thumbnail if new one is uploaded or image is removed
+        if ('thumbnail_url' in payload && found.thumbnail_url && payload.thumbnail_url !== found.thumbnail_url) {
             const oldPath = path.join(__dirname, '../../public/uploads/posts', found.thumbnail_url);
             if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
         }

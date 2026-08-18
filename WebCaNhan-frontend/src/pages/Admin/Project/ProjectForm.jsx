@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import api from '../../../utils/api';
-import './ProjectForm.css';
 import alertService from '../../../utils/alert';
+import './Project.css';
 
 const ProjectForm = () => {
     const { id } = useParams();
@@ -12,84 +14,78 @@ const ProjectForm = () => {
     const [formData, setFormData] = useState({
         name: '',
         slug: '',
-        project_type: '',
-        short_description: '',
-        description: '',
+        project_type: 'REAL_PROJECT',
         role: '',
-        team_size: '',
+        team_size: 1,
         start_date: '',
         end_date: '',
         github_url: '',
         demo_url: '',
+        short_description: '',
+        description: '',
         is_featured: 0,
         is_published: 1,
         display_order: 0,
-        technologies: []
+        technologies: [] // Stores array of IDs
     });
 
-    const [availableTechnologies, setAvailableTechnologies] = useState([]);
+    const [isSlugLocked, setIsSlugLocked] = useState(true);
+    
+    // Primary Image
+    const [primaryImageFile, setPrimaryImageFile] = useState(null);
+    const [primaryImagePreview, setPrimaryImagePreview] = useState('');
+    const [existingPrimaryImage, setExistingPrimaryImage] = useState('');
+    const primaryInputRef = useRef(null);
 
-    // For existing project images
-    const [existingPrimary, setExistingPrimary] = useState('');
-    const [existingImages, setExistingImages] = useState([]);
+    // Tech Chips state
+    const [techInput, setTechInput] = useState('');
+    const [allTechnologies, setAllTechnologies] = useState([]); // Array of {id, name}
 
-    // For new uploads
-    const [primaryFile, setPrimaryFile] = useState(null);
-    const [primaryPreview, setPrimaryPreview] = useState('');
-
-    const [multiFiles, setMultiFiles] = useState([]);
-    const [multiPreviews, setMultiPreviews] = useState([]);
-
-    const [isLoading, setIsLoading] = useState(isEditMode);
+    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        fetchAvailableTechnologies();
-        if (isEditMode) {
-            fetchData();
-        }
+        fetchInitialData();
     }, [id]);
 
-    const fetchAvailableTechnologies = async () => {
+    const fetchInitialData = async () => {
         try {
-            const response = await api.get('/technologies');
-            if (response.data.metadata) {
-                setAvailableTechnologies(response.data.metadata);
+            // Fetch all technologies first
+            const techRes = await api.get('/technologies');
+            let techs = [];
+            if (techRes.data.metadata) {
+                techs = techRes.data.metadata;
+                setAllTechnologies(techs);
             }
-        } catch (error) {
-            console.error("Failed to fetch technologies:", error);
-        }
-    };
 
-    const fetchData = async () => {
-        try {
-            const response = await api.get(`/projects/${id}`);
-            if (response.data.metadata) {
-                const data = response.data.metadata;
-                setFormData({
-                    name: data.name || '',
-                    slug: data.slug || '',
-                    project_type: data.project_type || '',
-                    short_description: data.short_description || '',
-                    description: data.description || '',
-                    role: data.role || '',
-                    team_size: data.team_size || '',
-                    start_date: data.start_date ? new Date(data.start_date).toISOString().split('T')[0] : '',
-                    end_date: data.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
-                    github_url: data.github_url || '',
-                    demo_url: data.demo_url || '',
-                    is_featured: data.is_featured ? 1 : 0,
-                    is_published: data.is_published !== undefined ? (data.is_published ? 1 : 0) : 1,
-                    display_order: data.display_order || 0,
-                    technologies: data.project_technologies ? data.project_technologies.map(pt => pt.id) : []
-                });
+            if (isEditMode) {
+                const response = await api.get(`/projects/${id}`);
+                if (response.data.metadata) {
+                    const data = response.data.metadata;
+                    // project_technologies comes as [{id, name, ...}]
+                    const selectedTechIds = (data.project_technologies || []).map(t => t.id);
 
-                if (data.thumbnail_url) {
-                    setExistingPrimary(`http://localhost:5000/uploads/projects/${data.thumbnail_url}`);
-                }
+                    setFormData({
+                        name: data.name || '',
+                        slug: data.slug || '',
+                        project_type: data.project_type || 'REAL_PROJECT',
+                        role: data.role || '',
+                        team_size: data.team_size || 1,
+                        start_date: data.start_date ? data.start_date.split('T')[0] : '',
+                        end_date: data.end_date ? data.end_date.split('T')[0] : '',
+                        github_url: data.github_url || '',
+                        demo_url: data.demo_url || '',
+                        short_description: data.short_description || '',
+                        description: data.description || '',
+                        is_featured: data.is_featured ? 1 : 0,
+                        is_published: data.is_published ? 1 : 0,
+                        display_order: data.display_order || 0,
+                        technologies: selectedTechIds
+                    });
 
-                if (data.project_images && data.project_images.length > 0) {
-                    setExistingImages(data.project_images);
+                    if (data.thumbnail_url) {
+                        setExistingPrimaryImage(`http://localhost:5000/uploads/projects/${data.thumbnail_url}`);
+                    }
                 }
             }
         } catch (error) {
@@ -100,296 +96,349 @@ const ProjectForm = () => {
         }
     };
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? (checked ? 1 : 0) : value
-        }));
+    const generateSlug = (text) => {
+        return text.toString().toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, "") 
+            .replace(/\s+/g, '-') 
+            .replace(/[^\w\-]+/g, '') 
+            .replace(/\-\-+/g, '-') 
+            .replace(/^-+/, '') 
+            .replace(/-+$/, ''); 
     };
 
-    const handleTechnologyChange = (techId) => {
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
         setFormData(prev => {
-            const isSelected = prev.technologies.includes(techId);
-            if (isSelected) {
-                return { ...prev, technologies: prev.technologies.filter(id => id !== techId) };
-            } else {
-                return { ...prev, technologies: [...prev.technologies, techId] };
+            const newData = { ...prev, [name]: type === 'checkbox' ? (checked ? 1 : 0) : value };
+            if (name === 'name' && isSlugLocked) {
+                newData.slug = generateSlug(value);
             }
+            return newData;
         });
     };
 
+    const handleQuillChange = (value) => {
+        setFormData(prev => ({ ...prev, description: value }));
+    };
+
+    // Primary Image Handlers
     const handlePrimaryFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setPrimaryFile(file);
-            setPrimaryPreview(URL.createObjectURL(file));
+            setPrimaryImageFile(file);
+            setPrimaryImagePreview(URL.createObjectURL(file));
         }
     };
 
-    const handleMultiFileChange = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            setMultiFiles(prev => [...prev, ...files]);
-
-            const newPreviews = files.map(file => URL.createObjectURL(file));
-            setMultiPreviews(prev => [...prev, ...newPreviews]);
-        }
-    };
-
-    const removeNewMultiFile = (index) => {
-        setMultiFiles(prev => prev.filter((_, i) => i !== index));
-        setMultiPreviews(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const handleDeleteExistingImage = async (imageId) => {
-        if (await alertService.confirm('Xác nhận', 'Bạn có chắc chắn muốn xóa ảnh này?')) {
-            try {
-                await api.delete(`/project_images/${imageId}`);
-                setExistingImages(prev => prev.filter(img => img.id !== imageId));
-
-                alertService.success('Đã xóa ảnh!');
-            } catch (error) {
-                alertService.error('Xóa ảnh thất bại!');
+    const removePrimaryImage = async (e) => {
+        e.stopPropagation();
+        if (existingPrimaryImage || primaryImagePreview) {
+            const confirmed = await alertService.confirm('Gỡ ảnh', 'Xóa ảnh đại diện của dự án này?');
+            if (confirmed) {
+                setPrimaryImageFile(null);
+                setPrimaryImagePreview('');
+                setExistingPrimaryImage('');
+                alertService.success('Đã gỡ ảnh. Nhấn Lưu để áp dụng chính thức!');
             }
         }
     };
 
+    // Tech Chips Handlers
+    const addTech = (techId) => {
+        if (!formData.technologies.includes(techId)) {
+            setFormData(prev => ({ ...prev, technologies: [...prev.technologies, techId] }));
+        }
+        setTechInput('');
+    };
+
+    const removeTech = (techId) => {
+        setFormData(prev => ({ ...prev, technologies: prev.technologies.filter(id => id !== techId) }));
+    };
+
+    // Submit
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        const isConfirmed = await alertService.confirm('Xác nhận lưu', 'Bạn có chắc chắn muốn lưu các thông tin này không?', 'Lưu', 'Hủy');
-        if (!isConfirmed) return;
+        
+        if (!formData.name.trim()) return alertService.error('Vui lòng nhập tên dự án!');
+        if (!formData.slug.trim()) return alertService.error('Đường dẫn (slug) không được để trống!');
 
         setIsSaving(true);
         try {
             const submitData = new FormData();
-
-            // Append text fields
+            
             Object.keys(formData).forEach(key => {
                 if (key === 'technologies') {
-                    submitData.append('technologies', JSON.stringify(formData.technologies));
-                } else {
+                    // Send array of IDs as JSON string
+                    submitData.append(key, JSON.stringify(formData[key]));
+                } else if (formData[key] !== null && formData[key] !== '') {
                     submitData.append(key, formData[key]);
                 }
             });
 
-            // Append primary image
-            if (primaryFile) {
-                submitData.append('primary_image', primaryFile);
+            if (!primaryImageFile && !existingPrimaryImage && isEditMode) {
+                submitData.append('thumbnail_url', '');
             }
 
-            // Append multi images
-            if (multiFiles.length > 0) {
-                multiFiles.forEach(file => {
-                    submitData.append('project_images', file);
-                });
+            if (primaryImageFile) {
+                submitData.append('primary_image', primaryImageFile);
             }
 
             if (isEditMode) {
-                await api.put(`/projects/${id}`, submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.put(`/projects/${id}`, submitData, { headers: { 'Content-Type': 'multipart/form-data' } });
             } else {
-                await api.post('/projects', submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.post('/projects', submitData, { headers: { 'Content-Type': 'multipart/form-data' } });
             }
-            alertService.success('Lưu dữ liệu thành công!');
+            
+            alertService.success('Đã lưu dự án thành công!');
             navigate('/admin/projects');
         } catch (error) {
-            alertService.error(error.response?.data?.message || 'Có lỗi xảy ra!');
+            alertService.error(error.response?.data?.message || 'Có lỗi xảy ra khi lưu dự án!');
             setIsSaving(false);
         }
     };
 
-    if (isLoading) return <div className="loading-spinner">Đang tải...</div>;
+    if (isLoading) return <div className="loading-spinner">Đang tải dữ liệu...</div>;
+
+    const filteredSuggestions = allTechnologies.filter(t => 
+        t.name.toLowerCase().includes(techInput.toLowerCase()) && !formData.technologies.includes(t.id)
+    );
 
     return (
         <div className="admin-module">
-            <div className="module-header">
-                <h2>{isEditMode ? 'Sửa thông tin Dự án' : 'Thêm mới Dự án'}</h2>
-                <button className="btn-secondary" onClick={() => navigate('/admin/projects')}>Quay lại</button>
+            <div className="module-header" style={{ marginBottom: '16px' }}>
+                <div>
+                    <h2>{isEditMode ? 'Chỉnh sửa Dự án' : 'Thêm Dự án mới'}</h2>
+                </div>
+                <button className="btn-secondary" onClick={() => navigate('/admin/projects')} disabled={isSaving}>
+                    Quay lại danh sách
+                </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="admin-form extended-form">
+            <form className="editor-layout" onSubmit={handleSubmit}>
+                
+                {/* LEFT COLUMN - 65% */}
+                <div className="editor-main">
+                    <div className="editor-card">
+                        <div className="editor-card-header">Thông tin cơ bản</div>
+                        <div className="editor-card-body">
+                            <div className="form-group">
+                                <label>Tên dự án *</label>
+                                <input type="text" name="name" value={formData.name} onChange={handleChange} className="form-input" placeholder="VD: SusuShop E-commerce" style={{ fontSize: '1.2rem', fontWeight: 'bold' }} />
+                            </div>
 
-                <div className="form-section">
-                    <h3 className="section-title">Thông tin cơ bản</h3>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Tên dự án *</label>
-                            <input type="text" name="name" value={formData.name} onChange={handleChange} required />
-                        </div>
-                        <div className="form-group">
-                            <label>Slug (URL thân thiện) *</label>
-                            <input type="text" name="slug" value={formData.slug} onChange={handleChange} required />
-                        </div>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Loại dự án</label>
-                            <select name="project_type" value={formData.project_type} onChange={handleChange}>
-                                <option value="">-- Chọn loại dự án --</option>
-                                <option value="REAL_PROJECT">Dự án thực tế (REAL_PROJECT)</option>
-                                <option value="UNIVERSITY_PROJECT">Dự án môn học/Trường (UNIVERSITY_PROJECT)</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label>Vai trò của bạn</label>
-                            <input type="text" name="role" value={formData.role} onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Quy mô team (Số lượng)</label>
-                            <input type="number" name="team_size" value={formData.team_size} onChange={handleChange} min="1" />
-                        </div>
-                        <div className="form-group">
-                            <label>Ngày bắt đầu</label>
-                            <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} />
-                        </div>
-                        <div className="form-group">
-                            <label>Ngày kết thúc</label>
-                            <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Repo URL (Mã nguồn)</label>
-                            <input type="url" name="github_url" value={formData.github_url} onChange={handleChange} />
-                        </div>
-                        <div className="form-group">
-                            <label>Live URL (Demo)</label>
-                            <input type="url" name="demo_url" value={formData.demo_url} onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '30px' }}>
-                            <input
-                                type="checkbox"
-                                id="is_featured"
-                                name="is_featured"
-                                checked={formData.is_featured === 1}
-                                onChange={handleChange}
-                                style={{ width: 'auto' }}
-                            />
-                            <label htmlFor="is_featured" style={{ marginBottom: 0 }}>Đánh dấu nổi bật (Featured)</label>
-                        </div>
-                        <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '30px' }}>
-                            <input
-                                type="checkbox"
-                                id="is_published"
-                                name="is_published"
-                                checked={formData.is_published === 1}
-                                onChange={handleChange}
-                                style={{ width: 'auto' }}
-                            />
-                            <label htmlFor="is_published" style={{ marginBottom: 0 }}>Xuất bản (Hiển thị công khai)</label>
-                        </div>
-                        <div className="form-group">
-                            <label>Thứ tự hiển thị</label>
-                            <input type="number" name="display_order" value={formData.display_order} onChange={handleChange} />
-                        </div>
-                    </div>
-                    <div className="form-group">
-                        <label>Mô tả ngắn (Summary) *</label>
-                        <textarea name="short_description" value={formData.short_description} onChange={handleChange} rows="2" required></textarea>
-                    </div>
-                    <div className="form-group">
-                        <label>Mô tả chi tiết (Hỗ trợ Markdown)</label>
-                        <textarea name="description" value={formData.description} onChange={handleChange} rows="6"></textarea>
-                    </div>
-                </div>
-
-                <div className="form-section">
-                    <h3 className="section-title">Công nghệ sử dụng</h3>
-                    <div className="form-group">
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                            {availableTechnologies.map(tech => (
-                                <div key={tech.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <input
-                                        type="checkbox"
-                                        id={`tech-${tech.id}`}
-                                        checked={formData.technologies.includes(tech.id)}
-                                        onChange={() => handleTechnologyChange(tech.id)}
-                                        style={{ width: 'auto', marginBottom: 0 }}
-                                    />
-                                    <label htmlFor={`tech-${tech.id}`} style={{ marginBottom: 0 }}>{tech.name}</label>
+                            <div className="form-group">
+                                <label>Đường dẫn thân thiện (Slug) *</label>
+                                <div className="editor-slug-wrapper" style={{ marginBottom: 0, paddingBottom: 0, border: 'none' }}>
+                                    <span style={{ color: '#94a3b8' }}>/projects/</span>
+                                    <input type="text" name="slug" value={formData.slug} onChange={handleChange} className="form-input" style={{ flex: 1 }} readOnly={isSlugLocked} />
+                                    <button type="button" className="btn-lock" onClick={() => setIsSlugLocked(!isSlugLocked)} title="Mở khóa slug">
+                                        {isSlugLocked ? '🔒' : '🔓'}
+                                    </button>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                            </div>
 
-                <div className="form-section">
-                    <h3 className="section-title">Hình ảnh dự án</h3>
-
-                    <div className="form-group file-group">
-                        <label>Ảnh chính (Primary Image)</label>
-                        <div className="file-preview-container">
-                            {primaryPreview || existingPrimary ? (
-                                <img
-                                    src={primaryPreview || existingPrimary}
-                                    alt="Primary Preview"
-                                    className="avatar-preview cover-preview"
-                                />
-                            ) : (
-                                <div className="avatar-placeholder cover-placeholder">Chưa có ảnh</div>
-                            )}
-                            <div className="custom-upload-wrapper">
-                                <label htmlFor="primary-upload" className="custom-upload-btn">
-                                    <span className="icon">🖼️</span> {isEditMode ? 'Đổi ảnh chính' : 'Tải ảnh chính'}
-                                </label>
-                                <input id="primary-upload" type="file" accept="image/jpeg, image/png, image/jpg" onChange={handlePrimaryFileChange} className="hidden-file-input" />
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Loại dự án *</label>
+                                    <select name="project_type" value={formData.project_type} onChange={handleChange} className="form-input">
+                                        <option value="REAL_PROJECT">Dự án Doanh nghiệp/Thực tế</option>
+                                        <option value="UNIVERSITY">Dự án làm ở đại học</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Vai trò của bạn *</label>
+                                    <input type="text" name="role" value={formData.role} onChange={handleChange} className="form-input" placeholder="VD: Fullstack Developer" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Quy mô nhóm</label>
+                                    <input type="number" name="team_size" value={formData.team_size} onChange={handleChange} className="form-input" min="1" />
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="form-group file-group" style={{ marginTop: '30px' }}>
-                        <label>Ảnh chi tiết (Nhiều ảnh)</label>
-                        <div className="custom-upload-wrapper" style={{ marginBottom: '15px' }}>
-                            <label htmlFor="multi-upload" className="custom-upload-btn" style={{ background: 'rgba(16, 185, 129, 0.2)' }}>
-                                <span className="icon">➕</span> Thêm ảnh chi tiết
-                            </label>
-                            <input id="multi-upload" type="file" multiple accept="image/jpeg, image/png, image/jpg" onChange={handleMultiFileChange} className="hidden-file-input" />
+                    <div className="editor-card">
+                        <div className="editor-card-header">Thời gian & Liên kết</div>
+                        <div className="editor-card-body">
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Ngày bắt đầu</label>
+                                    <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} className="form-input" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Ngày kết thúc</label>
+                                    <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} className="form-input" />
+                                    <small style={{ color: '#94a3b8' }}>Bỏ trống nếu đang phát triển</small>
+                                </div>
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Source Code URL (Github/Gitlab)</label>
+                                    <input type="text" name="github_url" value={formData.github_url} onChange={handleChange} className="form-input" placeholder="https://github.com/..." />
+                                </div>
+                                <div className="form-group">
+                                    <label>Live Demo URL</label>
+                                    <input type="text" name="demo_url" value={formData.demo_url} onChange={handleChange} className="form-input" placeholder="https://..." />
+                                </div>
+                            </div>
                         </div>
+                    </div>
 
-                        <div className="project-images-grid">
-                            {/* Existing Images */}
-                            {existingImages.map((img) => (
-                                <div key={img.id} className="image-preview-card">
-                                    <img src={`http://localhost:5000/uploads/projects/${img.image_url}`} alt="Project Detail" />
-                                    <button
-                                        type="button"
-                                        className="btn-delete-img"
-                                        onClick={() => handleDeleteExistingImage(img.id)}
-                                        title="Xóa ảnh này"
-                                    >✕</button>
-                                </div>
-                            ))}
-
-                            {/* New Previews */}
-                            {multiPreviews.map((preview, index) => (
-                                <div key={`new-${index}`} className="image-preview-card" style={{ border: '2px dashed #10b981' }}>
-                                    <img src={preview} alt="New Preview" />
-                                    <button
-                                        type="button"
-                                        className="btn-delete-img"
-                                        onClick={() => removeNewMultiFile(index)}
-                                        title="Bỏ chọn"
-                                    >✕</button>
-                                </div>
-                            ))}
+                    <div className="editor-card">
+                        <div className="editor-card-header">Chi tiết Dự án</div>
+                        <div className="editor-card-body">
+                            <div className="form-group">
+                                <label>Mô tả ngắn (Hiển thị trên thẻ dự án) *</label>
+                                <textarea name="short_description" value={formData.short_description} onChange={handleChange} className="form-input" rows="3" placeholder="Tóm tắt tính năng chính 2-3 dòng..."></textarea>
+                            </div>
+                            <div className="form-group">
+                                <label>Bài viết giới thiệu chi tiết (Markdown/Rich Text)</label>
+                                <ReactQuill 
+                                    theme="snow" 
+                                    value={formData.description} 
+                                    onChange={handleQuillChange}
+                                    style={{ height: '400px', marginBottom: '40px' }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="form-actions">
-                    <button type="submit" className="btn-primary" disabled={isSaving}>
-                        {isSaving ? 'Đang lưu...' : 'Lưu Dự án'}
-                    </button>
+                {/* RIGHT COLUMN - 35% */}
+                <div className="editor-sidebar">
+                    
+                    <div className="editor-card">
+                        <div className="editor-card-header">Công nghệ sử dụng</div>
+                        <div className="editor-card-body" style={{ position: 'relative' }}>
+                            <div className="tech-multi-select" onClick={() => document.getElementById('tech-input').focus()}>
+                                {formData.technologies.map(techId => {
+                                    const tech = allTechnologies.find(t => t.id === techId);
+                                    if (!tech) return null;
+                                    return (
+                                        <span key={techId} className="tech-multi-chip">
+                                            {tech.name}
+                                            <button type="button" onClick={() => removeTech(techId)}>×</button>
+                                        </span>
+                                    );
+                                })}
+                                <input 
+                                    id="tech-input"
+                                    type="text" 
+                                    className="tech-multi-input" 
+                                    value={techInput}
+                                    onChange={(e) => setTechInput(e.target.value)}
+                                    placeholder={formData.technologies.length === 0 ? "Gõ tìm kiếm..." : ""}
+                                />
+                            </div>
+                            {techInput && filteredSuggestions.length > 0 && (
+                                <div className="tech-suggestions">
+                                    {filteredSuggestions.map(s => (
+                                        <div key={s.id} className="tech-suggestion-item" onClick={() => addTech(s.id)}>
+                                            {s.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            <small style={{ color: '#94a3b8', display: 'block', marginTop: '8px' }}>Nhập tên công nghệ để lọc và chọn từ hệ thống.</small>
+                        </div>
+                    </div>
+
+                    <div className="editor-card">
+                        <div className="editor-card-header">Trạng thái hiển thị</div>
+                        <div className="editor-card-body">
+                            <div className="setting-row">
+                                <div className="setting-info">
+                                    <h5>⭐ Nổi bật (Featured)</h5>
+                                    <p>Ghim lên đầu trang chủ</p>
+                                </div>
+                                <label className="toggle-switch">
+                                    <input type="checkbox" name="is_featured" checked={formData.is_featured === 1} onChange={handleChange} />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div className="setting-row">
+                                <div className="setting-info">
+                                    <h5>Xuất bản (Public)</h5>
+                                    <p>Hiển thị công khai trên web</p>
+                                </div>
+                                <label className="toggle-switch">
+                                    <input type="checkbox" name="is_published" checked={formData.is_published === 1} onChange={handleChange} />
+                                    <span className="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div className="setting-row">
+                                <div className="setting-info">
+                                    <h5>Thứ tự hiển thị</h5>
+                                </div>
+                                <input type="number" name="display_order" value={formData.display_order} onChange={handleChange} className="form-input" style={{ width: '80px', padding: '4px 8px' }} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="editor-card">
+                        <div className="editor-card-header">Ảnh đại diện (Thumbnail)</div>
+                        <div className="editor-card-body">
+                            <div className="gallery-dropzone" onClick={() => primaryInputRef.current?.click()}>
+                                {primaryImagePreview || existingPrimaryImage ? (
+                                    <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
+                                        <img src={primaryImagePreview || existingPrimaryImage} alt="Cover" style={{ width: '100%', display: 'block' }} />
+                                        <div style={{ position: 'absolute', bottom: '8px', right: '8px', display: 'flex', gap: '8px' }}>
+                                            <button type="button" className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem' }} onClick={(e) => { e.stopPropagation(); primaryInputRef.current?.click(); }}>Đổi</button>
+                                            <button type="button" className="btn-primary" style={{ padding: '4px 8px', fontSize: '0.8rem', background: '#dc2626', borderColor: '#dc2626' }} onClick={removePrimaryImage}>Xóa</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ fontSize: '2.5rem', color: '#94a3b8' }}>📸</div>
+                                        <div style={{ color: '#64748b', marginTop: '8px' }}>Click để tải ảnh 16:9 lên</div>
+                                    </>
+                                )}
+                                <input type="file" ref={primaryInputRef} accept="image/*" onChange={handlePrimaryFileChange} style={{ display: 'none' }} />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="editor-card">
+                        <div className="editor-card-header">Thư viện ảnh (Gallery)</div>
+                        <div className="editor-card-body">
+                            <div className="gallery-dropzone" onClick={() => document.getElementById('galleryInput').click()}>
+                                <div style={{ fontSize: '2rem', color: '#94a3b8' }}>🖼️</div>
+                                <div style={{ color: '#64748b', marginTop: '8px' }}>Tải lên nhiều ảnh minh họa...</div>
+                            </div>
+                            <input 
+                                id="galleryInput" 
+                                type="file" 
+                                multiple 
+                                accept="image/*" 
+                                style={{ display: 'none' }} 
+                                onChange={(e) => {
+                                    if(e.target.files.length > 0) alertService.info("Tính năng up nhiều ảnh đang được phát triển backend!");
+                                }} 
+                            />
+                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '8px' }}>
+                                * Tính năng Gallery sẽ sớm được kích hoạt trong bản cập nhật sau.
+                            </p>
+                        </div>
+                    </div>
+
                 </div>
+
+                {/* Sticky Bottom Bar */}
+                <div className="editor-sticky-bar">
+                    <div className="sticky-actions-left">
+                        {isEditMode && (
+                            <button type="button" className="btn-secondary" onClick={() => window.open(`/projects/${formData.slug}`, '_blank')}>
+                                👁️ Xem Preview
+                            </button>
+                        )}
+                    </div>
+                    <div className="sticky-actions-right">
+                        <button type="submit" className="btn-primary" disabled={isSaving}>
+                            {isSaving ? 'Đang lưu...' : '🚀 Lưu Dự án'}
+                        </button>
+                    </div>
+                </div>
+
             </form>
         </div>
     );

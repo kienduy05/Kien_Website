@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../../../utils/api';
 import alertService from '../../../utils/alert';
 
-const SkillForm = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const isEditMode = id && id !== 'new';
+const SkillForm = ({ skillId, onSaved, onCancel }) => {
+    const isEditMode = skillId && skillId !== 'new';
 
     const [formData, setFormData] = useState({
         name: '',
-        category: '',
+        category: 'Frontend', // Default
         level: 50,
         is_active: 1,
         display_order: 0
@@ -22,22 +19,28 @@ const SkillForm = () => {
 
     const [isLoading, setIsLoading] = useState(isEditMode);
     const [isSaving, setIsSaving] = useState(false);
+    
+    const iconInputRef = useRef(null);
+
+    const categories = ['Frontend', 'Backend', 'Database', 'DevOps & Tools', 'Design', 'Other'];
 
     useEffect(() => {
         if (isEditMode) {
             fetchData();
+        } else {
+            setIsLoading(false);
         }
-    }, [id]);
+    }, [skillId]);
 
     const fetchData = async () => {
         try {
-            const response = await api.get(`/skills/${id}`);
+            const response = await api.get(`/skills/${skillId}`);
             if (response.data.metadata) {
                 const data = response.data.metadata;
                 setFormData({
                     name: data.name || '',
-                    category: data.category || '',
-                    level: data.level || 50,
+                    category: data.category || 'Frontend',
+                    level: parseInt(data.level) || 50, // Parse level to number
                     is_active: data.is_active !== undefined ? (data.is_active ? 1 : 0) : 1,
                     display_order: data.display_order || 0
                 });
@@ -62,6 +65,10 @@ const SkillForm = () => {
         }));
     };
 
+    const handleSliderChange = (e) => {
+        setFormData(prev => ({ ...prev, level: parseInt(e.target.value) }));
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -70,12 +77,12 @@ const SkillForm = () => {
         }
     };
 
+    const triggerFileInput = () => {
+        if (iconInputRef.current) iconInputRef.current.click();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        const isConfirmed = await alertService.confirm('Xác nhận lưu', 'Bạn có chắc chắn muốn lưu các thông tin này không?', 'Lưu', 'Hủy');
-        if (!isConfirmed) return;
-        
         setIsSaving(true);
         try {
             const submitData = new FormData();
@@ -89,7 +96,7 @@ const SkillForm = () => {
             }
 
             if (isEditMode) {
-                await api.put(`/skills/${id}`, submitData, {
+                await api.put(`/skills/${skillId}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             } else {
@@ -98,79 +105,138 @@ const SkillForm = () => {
                 });
             }
             alertService.success('Lưu dữ liệu thành công!');
-            navigate('/admin/skills');
+            if (onSaved) onSaved();
         } catch (error) {
             alertService.error(error.response?.data?.message || 'Có lỗi xảy ra!');
             setIsSaving(false);
         }
     };
 
+    const getProficiencyLabel = (level) => {
+        if (level < 30) return 'Mới bắt đầu (Beginner)';
+        if (level < 60) return 'Trung bình (Intermediate)';
+        if (level < 80) return 'Khá giỏi (Advanced)';
+        return 'Chuyên gia (Expert)';
+    };
+
+    const getProficiencyColor = (level) => {
+        if (level < 30) return '#f97316'; // Orange
+        if (level < 60) return '#eab308'; // Yellow
+        if (level < 80) return '#3b82f6'; // Blue
+        return '#10b981'; // Green
+    };
+
     if (isLoading) return <div className="loading-spinner">Đang tải...</div>;
 
     return (
-        <div className="admin-module">
-            <div className="module-header">
-                <h2>{isEditMode ? 'Sửa Kỹ năng' : 'Thêm mới Kỹ năng'}</h2>
-                <button className="btn-secondary" onClick={() => navigate('/admin/skills')}>Quay lại</button>
+        <form onSubmit={handleSubmit} className="admin-form extended-form">
+            <div className="form-group file-group" style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <label>Icon / Logo Kỹ năng</label>
+                <div 
+                    className="dropzone-container" 
+                    onClick={triggerFileInput}
+                    style={{ width: '120px', height: '120px', margin: '0 auto', borderRadius: '24px', padding: '10px' }}
+                >
+                    {imagePreview || existingImage ? (
+                        <>
+                            <img 
+                                src={imagePreview || existingImage} 
+                                alt="Icon Preview" 
+                                className="dropzone-preview" 
+                                style={{ borderRadius: '24px', objectFit: 'contain', padding: '8px' }}
+                            />
+                            <div className="dropzone-preview-overlay" style={{ borderRadius: '24px', fontSize: '0.8rem' }}>Đổi ảnh</div>
+                        </>
+                    ) : (
+                        <>
+                            <span className="dropzone-icon" style={{ fontSize: '2rem', marginBottom: '4px' }}>✨</span>
+                            <span className="dropzone-subtext">Click tải ảnh</span>
+                        </>
+                    )}
+                    <input type="file" ref={iconInputRef} accept="image/jpeg, image/png, image/jpg, image/svg+xml" onChange={handleFileChange} className="dropzone-input" />
+                </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="admin-form">
-                <div className="form-section">
-                    <div className="form-group">
-                        <label>Tên kỹ năng *</label>
-                        <input type="text" name="name" value={formData.name} onChange={handleChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label>Phân loại (VD: Frontend, Backend, Design)</label>
-                        <input type="text" name="category" value={formData.category} onChange={handleChange} />
-                    </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Mức độ thành thạo (0 - 100%)</label>
-                            <input type="number" name="level" min="0" max="100" value={formData.level} onChange={handleChange} />
-                        </div>
-                        <div className="form-group">
-                            <label>Thứ tự hiển thị</label>
-                            <input type="number" name="display_order" value={formData.display_order} onChange={handleChange} />
-                        </div>
-                        <div className="form-group checkbox-group" style={{ marginTop: '25px' }}>
-                            <label>
-                                <input type="checkbox" name="is_active" checked={formData.is_active === 1} onChange={handleChange} />
-                                {' '}Kích hoạt (Hiển thị)
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div className="form-group file-group" style={{ marginTop: '20px' }}>
-                        <label>Icon kỹ năng (Tùy chọn)</label>
-                        <div className="file-preview-container">
-                            {imagePreview || existingImage ? (
-                                <img 
-                                    src={imagePreview || existingImage} 
-                                    alt="Icon Preview" 
-                                    className="avatar-preview cover-preview" 
-                                    style={{ width: '80px', height: '80px', objectFit: 'contain' }}
-                                />
-                            ) : (
-                                <div className="avatar-placeholder cover-placeholder" style={{ width: '80px', height: '80px' }}>Trống</div>
-                            )}
-                            <div className="custom-upload-wrapper">
-                                <label htmlFor="icon-upload" className="custom-upload-btn">
-                                    <span className="icon">🖼️</span> Chọn Icon
-                                </label>
-                                <input id="icon-upload" type="file" accept="image/jpeg, image/png, image/jpg, image/svg+xml" onChange={handleFileChange} className="hidden-file-input" />
-                            </div>
-                        </div>
+            <div className="form-row">
+                <div className="form-group">
+                    <label>Tên kỹ năng <span style={{color: '#ef4444'}}>*</span></label>
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="Ví dụ: React.js, Python..." />
+                </div>
+                <div className="form-group">
+                    <label>Phân loại nhóm (Category) <span style={{color: '#ef4444'}}>*</span></label>
+                    <div style={{ position: 'relative' }}>
+                        <input 
+                            type="text" 
+                            name="category" 
+                            value={formData.category} 
+                            onChange={handleChange} 
+                            list="category-suggestions" 
+                            required 
+                            placeholder="Chọn hoặc gõ nhóm mới..." 
+                        />
+                        <datalist id="category-suggestions">
+                            {categories.map(cat => <option key={cat} value={cat} />)}
+                        </datalist>
                     </div>
                 </div>
+            </div>
 
-                <div className="form-actions">
-                    <button type="submit" className="btn-primary" disabled={isSaving}>
-                        {isSaving ? 'Đang lưu...' : 'Lưu dữ liệu'}
-                    </button>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+                <label>
+                    Mức độ thành thạo: 
+                    <span style={{ marginLeft: '8px', fontWeight: 'bold', color: getProficiencyColor(formData.level) }}>
+                        {getProficiencyLabel(formData.level)}
+                    </span>
+                </label>
+                <div className="range-slider-container">
+                    <input 
+                        type="range" 
+                        min="0" max="100" 
+                        value={formData.level} 
+                        onChange={handleSliderChange} 
+                        className="range-slider"
+                    />
+                    <input 
+                        type="number" 
+                        name="level" 
+                        min="0" max="100" 
+                        value={formData.level} 
+                        onChange={handleChange} 
+                        className="range-number-input"
+                    />
+                    <span>%</span>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <div className="form-row">
+                <div className="form-group">
+                    <label>Thứ tự hiển thị (Số lớn xếp trước)</label>
+                    <input type="number" name="display_order" value={formData.display_order} onChange={handleChange} min="0" />
+                </div>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <label style={{ marginBottom: '12px' }}>Trạng thái hiển thị</label>
+                    <label className="skill-status-toggle" style={{ fontSize: '1rem', color: '#0f172a' }}>
+                        <div className="toggle-switch">
+                            <input 
+                                type="checkbox" 
+                                name="is_active" 
+                                checked={formData.is_active === 1} 
+                                onChange={handleChange} 
+                            />
+                            <span className="toggle-slider"></span>
+                        </div>
+                        {formData.is_active === 1 ? 'Hiển thị trên Portfolio' : 'Đang ẩn'}
+                    </label>
+                </div>
+            </div>
+
+            <div className="drawer-footer">
+                <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSaving}>Hủy</button>
+                <button type="submit" className="btn-primary" disabled={isSaving}>
+                    {isSaving ? 'Đang lưu...' : '💾 Lưu Kỹ năng'}
+                </button>
+            </div>
+        </form>
     );
 };
 
